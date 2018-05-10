@@ -79,7 +79,7 @@
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <!-- Note: Minimal supported version is 4.3.0.Final. -->
-            <version>6.0.4.Final</version>
+            <version>6.0.9.Final</version>
         </dependency>
 
         <dependency>

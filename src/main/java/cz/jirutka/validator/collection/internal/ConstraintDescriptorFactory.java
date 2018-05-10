@@ -26,6 +26,7 @@ package cz.jirutka.validator.collection.internal;
 import org.hibernate.validator.internal.metadata.core.ConstraintHelper;
 import org.hibernate.validator.internal.metadata.core.ConstraintOrigin;
 import org.hibernate.validator.internal.metadata.descriptor.ConstraintDescriptorImpl;
+import org.hibernate.validator.internal.util.annotation.ConstraintAnnotationDescriptor;
 
 import javax.validation.metadata.ConstraintDescriptor;
 import java.lang.annotation.Annotation;
@@ -66,8 +67,24 @@ public abstract class ConstraintDescriptorFactory {
     public static ConstraintDescriptorFactory newInstance() {
 
         int version = HibernateValidatorInfo.getVersion();
+        if (version >= 6_0_9) {
+            try {
+                final Class<?> descriptorClass = ConstraintAnnotationDescriptor.class;
+                final Constructor<?> descriptorCtor = descriptorClass.getConstructor(Annotation.class);
+                return new ConstraintDescriptorFactory() {
+                    Class[] getConstructorArguments() {
+                        return new Class[]{ConstraintHelper.class, Member.class, descriptorClass, ElementType.class};
+                    }
 
-        if (version >= 6_0_4) {
+                    ConstraintDescriptorImpl newInstance(Annotation annotation) throws ReflectiveOperationException {
+                        return constructor.newInstance(CONSTRAINT_HELPER, null, descriptorCtor.newInstance(annotation),
+                            ElementType.LOCAL_VARIABLE);
+                    }
+                };
+            } catch (NoSuchMethodException ex) {
+                throw new IllegalStateException(ex);
+            }
+        } else if (version >= 6_0_4) {
             try {
                 final Class<?> descriptorClass
                     = Class.forName("org.hibernate.validator.internal.util.annotation.AnnotationDescriptor");
